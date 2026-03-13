@@ -79,18 +79,24 @@ map.addControl(
 
 map.on('load', () => {
   map.addImage('wind-arrow', createArrowImage());
+  addFireSource();
+  addFireLayers();
+  addWindSource();
+  addWindLayer();
+  fetchFires();
+  startRefresh();
+  setupFilters();
+  setupPanel();
+  setupRefreshBtn();
+  setupWindToggle();
+
+  // Load fire icon in background — swap it in once ready, don't block on it
   map.loadImage('Images/Fire_Icon.png', (err, image) => {
-    if (!err) map.addImage('fire-icon', image, { sdf: false });
-    addFireSource();
-    addFireLayers();
-    addWindSource();
-    addWindLayer();
-    fetchFires();
-    startRefresh();
-    setupFilters();
-    setupPanel();
-    setupRefreshBtn();
-    setupWindToggle();
+    if (err || !image) return;
+    map.addImage('fire-icon', image, { sdf: false });
+    if (map.getLayer('fire-points')) {
+      map.setLayoutProperty('fire-points', 'icon-image', 'fire-icon');
+    }
   });
 });
 
@@ -235,7 +241,7 @@ function addFireLayers() {
     source: 'fires',
     filter: ['!', ['has', 'point_count']],
     layout: {
-      'icon-image':             map.hasImage('fire-icon') ? 'fire-icon' : '',
+      'icon-image':             '',
       'icon-size': [
         'interpolate', ['linear'], ['get', 'frp'],
         0, 0.04,  50, 0.06,  200, 0.09,  1000, 0.14
