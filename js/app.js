@@ -67,13 +67,16 @@ map.addControl(
 );
 
 map.on('load', () => {
-  addFireSource();
-  addFireLayers();
-  fetchFires();
-  startRefresh();
-  setupFilters();
-  setupPanel();
-  setupRefreshBtn();
+  map.loadImage('Images/Fire_Icon.png', (err, image) => {
+    if (!err) map.addImage('fire-icon', image, { sdf: false });
+    addFireSource();
+    addFireLayers();
+    fetchFires();
+    startRefresh();
+    setupFilters();
+    setupPanel();
+    setupRefreshBtn();
+  });
 });
 
 // ── Data fetching ────────────────────────────────────────────────────────────
@@ -210,26 +213,20 @@ function addFireLayers() {
     paint: { 'text-color': '#fff' },
   });
 
-  // Individual fire points — size by FRP, colour by confidence
+  // Individual fire points — icon sized by FRP
   map.addLayer({
     id:     'fire-points',
-    type:   'circle',
+    type:   'symbol',
     source: 'fires',
     filter: ['!', ['has', 'point_count']],
-    paint: {
-      'circle-radius': [
+    layout: {
+      'icon-image':             map.hasImage('fire-icon') ? 'fire-icon' : '',
+      'icon-size': [
         'interpolate', ['linear'], ['get', 'frp'],
-        0, 5,  50, 8,  200, 12,  1000, 18
+        0, 0.04,  50, 0.06,  200, 0.09,  1000, 0.14
       ],
-      'circle-color': [
-        'match', ['get', 'conf'],
-        'high',    '#ff8c00',
-        'nominal', '#ef2601',
-        /* low */  '#818080'
-      ],
-      'circle-stroke-width': 1.5,
-      'circle-stroke-color': 'rgba(255,255,255,0.2)',
-      'circle-opacity': 0.9,
+      'icon-allow-overlap':     true,
+      'icon-ignore-placement':  true,
     },
   });
 
