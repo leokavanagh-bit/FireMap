@@ -85,6 +85,7 @@ html, body {
 }
 
 .card-icon  { font-size: 4.5rem; line-height: 1; }
+.card-icon img { width: 88px; height: 88px; object-fit: contain; display: block; }
 
 .card-name  {
   font-size: 1.55rem;
