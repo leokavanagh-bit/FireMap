@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gas Prices — Global News</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="side-nav">
+  <a href="index.html" class="nav-home">⌂ Home</a>
+  <div class="nav-brand">
+    <img src="Images/Global News neg.svg" class="nav-logo" alt="Global News">
+    <div class="nav-title">
+      <span class="nav-title-main">Gas Prices</span>
+      <span class="nav-title-sub">Canada</span>
+    </div>
+  </div>
+
+  <div class="province-filters" id="province-filters">
+    <button class="filter-pill active" data-province="all">All</button>
+    <button class="filter-pill" data-province="BC">BC</button>
+    <button class="filter-pill" data-province="AB">AB</button>
+    <button class="filter-pill" data-province="SK">SK</button>
+    <button class="filter-pill" data-province="MB">MB</button>
+    <button class="filter-pill" data-province="ON">ON</button>
+    <button class="filter-pill" data-province="QC">QC</button>
+    <button class="filter-pill" data-province="NB">NB</button>
+    <button class="filter-pill" data-province="NS">NS</button>
+    <button class="filter-pill" data-province="NL">NL</button>
+    <button class="filter-pill" data-province="YT">YT</button>
+    <button class="filter-pill" data-province="NT">NT</button>
+    <button class="filter-pill" data-province="NU">NU</button>
+  </div>
+
+  <div class="nav-status">
+    <span class="last-updated" id="last-updated">Sample Data</span>
+  </div>
+</nav>
+
+<div id="map"></div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-value" id="stat-avg">—</span>
+    <span class="stat-label">Nat'l Avg ¢/L</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <span class="stat-value stat-value--green" id="stat-low">—</span>
+    <span class="stat-label">Cheapest City</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <span class="stat-value stat-value--red" id="stat-high">—</span>
+    <span class="stat-label">Most Expensive</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <span class="stat-value" id="stat-diesel">—</span>
+    <span class="stat-label">Avg Diesel ¢/L</span>
+  </div>
+</div>
+
+<!-- Gas detail panel -->
+<div class="fire-panel" id="gas-panel">
+  <button class="panel-close" id="panel-close">✕</button>
+  <div class="panel-header">
+    <div class="panel-fire-icon">⛽</div>
+    <div>
+      <div class="panel-title" id="panel-city">—</div>
+      <div class="panel-province" id="panel-province">—</div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="panel-row">
+      <span class="panel-label">Regular</span>
+      <span class="panel-value" id="panel-regular">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Premium</span>
+      <span class="panel-value" id="panel-premium">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Diesel</span>
+      <span class="panel-value" id="panel-diesel">—</span>
+    </div>
+    <div class="panel-divider"></div>
+    <div class="panel-row">
+      <span class="panel-label">vs. National Avg</span>
+      <span class="panel-value" id="panel-vs-avg">—</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="js/gas.js"></script>
+</body>
+</html>

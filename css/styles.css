@@ -35,6 +35,22 @@ html, body {
   z-index: 100;
 }
 
+/* Home link at very top */
+.nav-home {
+  display: block;
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--gray);
+  text-decoration: none;
+  border-bottom: 1px solid var(--mid);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-home:hover { color: var(--light); background: rgba(255,255,255,0.05); }
+
 /* Brand block at top */
 .nav-brand {
   display: flex;
@@ -206,6 +222,9 @@ html, body {
   letter-spacing: 1px;
   line-height: 1;
 }
+
+.stat-value--green { color: #22c55e; }
+.stat-value--red   { color: var(--red); }
 
 .stat-label {
   font-size: 0.6rem;
