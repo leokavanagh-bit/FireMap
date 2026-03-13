@@ -144,6 +144,8 @@ function parseCSV(text) {
     const lat = parseFloat(c[iLat]);
     const lon = parseFloat(c[iLon]);
     if (isNaN(lat) || isNaN(lon)) return [];
+    const conf = (c[iConf] || '').trim().toLowerCase();
+    if (conf === 'low') return [];
 
     const rawTime = (c[iTime] || '').trim().padStart(4, '0');
     const time    = rawTime.slice(0, 2) + ':' + rawTime.slice(2);
@@ -152,7 +154,7 @@ function parseCSV(text) {
       lat,
       lon,
       frp:      parseFloat(c[iFrp]) || 0,
-      conf:     (c[iConf] || '').trim().toLowerCase(),
+      conf,
       date:     (c[iDate] || '').trim(),
       time,
       satellite: (c[iSat] || '').trim(),
