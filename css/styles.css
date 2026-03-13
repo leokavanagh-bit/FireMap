@@ -8,7 +8,7 @@
   --gray:   #818080;
   --lgray:  #aeaeae;
   --font:   -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --nav-w:  110px;
+  --nav-w:  150px;
   --stats-h: 68px;
 }
 
@@ -35,32 +35,19 @@ html, body {
   z-index: 100;
 }
 
-/* Home link at very top */
-.nav-home {
-  display: block;
-  padding: 10px 8px;
-  text-align: center;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  color: var(--gray);
-  text-decoration: none;
-  border-bottom: 1px solid var(--mid);
-  flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
-}
-.nav-home:hover { color: var(--light); background: rgba(255,255,255,0.05); }
-
-/* Brand block at top */
+/* Brand block at top — logo is the home link */
 .nav-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  padding: 12px 8px 10px;
+  padding: 16px 12px 14px;
   border-bottom: 1px solid var(--mid);
   flex-shrink: 0;
+  text-decoration: none;
+  transition: opacity 0.15s;
 }
+.nav-brand:hover { opacity: 0.8; }
 
 .nav-logo {
   width: 100%;
