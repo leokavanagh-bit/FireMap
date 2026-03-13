@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canada Wildfire Tracker — Global News</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-brand">
+    <img src="Global News neg.svg" class="nav-logo" alt="Global News">
+    <div class="nav-divider"></div>
+    <div class="nav-title">
+      <span class="nav-title-main">Wildfire Tracker</span>
+      <span class="nav-title-sub">Canada · Live</span>
+    </div>
+  </div>
+
+  <div class="province-filters" id="province-filters">
+    <button class="filter-pill active" data-province="all">All</button>
+    <button class="filter-pill" data-province="BC">BC</button>
+    <button class="filter-pill" data-province="AB">AB</button>
+    <button class="filter-pill" data-province="SK">SK</button>
+    <button class="filter-pill" data-province="MB">MB</button>
+    <button class="filter-pill" data-province="ON">ON</button>
+    <button class="filter-pill" data-province="QC">QC</button>
+    <button class="filter-pill" data-province="NB">NB</button>
+    <button class="filter-pill" data-province="NS">NS</button>
+    <button class="filter-pill" data-province="NL">NL</button>
+    <button class="filter-pill" data-province="YT">YT</button>
+    <button class="filter-pill" data-province="NT">NT</button>
+    <button class="filter-pill" data-province="NU">NU</button>
+  </div>
+
+  <div class="nav-status">
+    <span class="last-updated" id="last-updated">Loading…</span>
+    <button class="refresh-btn" id="refresh-btn" title="Refresh data">↻</button>
+  </div>
+</nav>
+
+<div id="map"></div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-value" id="stat-total">—</span>
+    <span class="stat-label">Active Fires</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <span class="stat-value" id="stat-high">—</span>
+    <span class="stat-label">High Confidence</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <span class="stat-value" id="stat-provinces">—</span>
+    <span class="stat-label">Provinces Affected</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat">
+    <span class="stat-value" id="stat-frp">—</span>
+    <span class="stat-label">Max Intensity (MW)</span>
+  </div>
+</div>
+
+<!-- Fire detail panel -->
+<div class="fire-panel" id="fire-panel">
+  <button class="panel-close" id="panel-close">✕</button>
+  <div class="panel-header">
+    <div class="panel-fire-icon">🔥</div>
+    <div>
+      <div class="panel-title">Active Fire</div>
+      <div class="panel-province" id="panel-province">—</div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="panel-row">
+      <span class="panel-label">Detected</span>
+      <span class="panel-value" id="panel-time">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Confidence</span>
+      <span class="panel-value" id="panel-confidence">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Intensity (FRP)</span>
+      <span class="panel-value" id="panel-frp">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Satellite</span>
+      <span class="panel-value" id="panel-satellite">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Day / Night</span>
+      <span class="panel-value" id="panel-daynight">—</span>
+    </div>
+    <div class="panel-row">
+      <span class="panel-label">Coordinates</span>
+      <span class="panel-value" id="panel-coords">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading fire data…</div>
+</div>
+
+<!-- Error banner -->
+<div class="error-banner" id="error-banner" style="display:none;">
+  ⚠ Unable to load fire data — check API keys and connection.
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
