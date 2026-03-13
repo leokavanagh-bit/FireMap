@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MAPBOX_TOKEN  = 'pk.eyJ1IjoibGthdmFuYWdoIiwiYSI6ImNtbW84Zm5wajBhOTQycXBzYWRnZ2lpZWMifQ.GeE2rQyJehYkAkibVLn7JA';
-const FIRMS_MAP_KEY = 'YOUR_FIRMS_MAP_KEY';
+const FIRMS_MAP_KEY = 'eae26ae5e078792674f7cb1eac317a4b';
 
 const FIRMS_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${FIRMS_MAP_KEY}/VIIRS_SNPP_NRT/-141,41,-52,84/1`;
 
