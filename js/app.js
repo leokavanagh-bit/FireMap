@@ -6,7 +6,7 @@
 // Sign up at firms.modaps.eosdis.nasa.gov/api/ for a free MAP_KEY
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MAPBOX_TOKEN  = 'YOUR_MAPBOX_TOKEN';
+const MAPBOX_TOKEN  = 'pk.eyJ1IjoibGthdmFuYWdoIiwiYSI6ImNtbW84Zm5wajBhOTQycXBzYWRnZ2lpZWMifQ.GeE2rQyJehYkAkibVLn7JA';
 const FIRMS_MAP_KEY = 'YOUR_FIRMS_MAP_KEY';
 
 const FIRMS_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${FIRMS_MAP_KEY}/VIIRS_SNPP_NRT/-141,41,-52,84/1`;
