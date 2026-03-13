@@ -140,10 +140,10 @@ function addHousingLayers() {
     source: 'housing',
     layout: {
       'text-field': [
-        'concat',
-        '$',
-        ['to-string', ['round', ['/', ['get', 'benchmark'], 1000]]],
-        'k',
+        'case',
+        ['>=', ['get', 'benchmark'], 1000000],
+        ['concat', '$', ['to-string', ['/', ['round', ['*', ['/', ['get', 'benchmark'], 1000000], 10]], 10]], 'M'],
+        ['concat', '$', ['to-string', ['round', ['/', ['get', 'benchmark'], 1000]]], 'k'],
       ],
       'text-size':             12,
       'text-font':             ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
