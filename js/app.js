@@ -87,7 +87,7 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 
 map = new mapboxgl.Map({
   container:  'map',
-  style:      'mapbox://styles/mapbox/dark-v11',
+  style:      'mapbox://styles/mapbox/light-v11',
   center:     [-96, 62],
   zoom:       3.5,
   minZoom:    2,
@@ -278,8 +278,8 @@ function addFireLayers() {
       'text-allow-overlap':  false,
     },
     paint: {
-      'text-color':      'rgba(255,255,255,0.75)',
-      'text-halo-color': 'rgba(0,0,0,0.6)',
+      'text-color':      'rgba(30,30,30,0.85)',
+      'text-halo-color': 'rgba(255,255,255,0.8)',
       'text-halo-width': 1,
     },
   });
