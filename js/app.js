@@ -387,10 +387,10 @@ function setSpinning(on) {
 
 function createArrowImage() {
   const size = 64;
-  const c    = document.createElement('canvas');
-  c.width = c.height = size;
-  const ctx  = c.getContext('2d');
-  const cx   = size / 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const cx  = size / 2;
 
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.fillStyle   = 'rgba(255,255,255,0.9)';
@@ -411,7 +411,8 @@ function createArrowImage() {
   ctx.closePath();
   ctx.fill();
 
-  return c;
+  // Return ImageData — what Mapbox addImage actually accepts
+  return ctx.getImageData(0, 0, size, size);
 }
 
 function addWindSource() {
