@@ -2,14 +2,17 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG
-// Sign up at mapbox.com → Account → Tokens
-// Sign up at firms.modaps.eosdis.nasa.gov/api/ for a free MAP_KEY
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MAPBOX_TOKEN  = 'pk.eyJ1IjoibGthdmFuYWdoIiwiYSI6ImNtbW84Zm5wajBhOTQycXBzYWRnZ2lpZWMifQ.GeE2rQyJehYkAkibVLn7JA';
-const FIRMS_MAP_KEY = 'eae26ae5e078792674f7cb1eac317a4b';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibGthdmFuYWdoIiwiYSI6ImNtbW84Zm5wajBhOTQycXBzYWRnZ2lpZWMifQ.GeE2rQyJehYkAkibVLn7JA';
 
-const FIRMS_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${FIRMS_MAP_KEY}/VIIRS_SNPP_NRT/-141,41,-52,84/1`;
+// CWFIS — Canadian Wildland Fire Information System (NRCan)
+// Fetches active fires (Out of Control + Being Held) for the current fire season
+function cwfisUrl() {
+  const year = new Date().getFullYear();
+  const filter = encodeURIComponent(`stage_of_control IN ('OC','BH','UC') AND last_rep_date >= '${year}-01-01'`);
+  return `https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=public:activefires&outputFormat=application/json&CQL_FILTER=${filter}`;
+}
 
 const REFRESH_MS = 5 * 60 * 1000; // auto-refresh every 5 minutes
 
@@ -24,7 +27,7 @@ const PROVINCE_BOUNDS = {
   QC:  [ -79.8, 44.9,  -57.1, 62.6],
   NB:  [ -69.1, 44.5,  -63.8, 48.1],
   NS:  [ -66.4, 43.4,  -59.7, 47.0],
-  PEI: [ -64.4, 45.9,  -62.0, 47.1],
+  PE:  [ -64.4, 45.9,  -62.0, 47.1],
   NL:  [ -67.8, 46.6,  -52.6, 60.4],
   YT:  [-141.0, 59.7, -124.0, 70.0],
   NT:  [-136.5, 59.9, -101.9, 78.8],
@@ -34,9 +37,30 @@ const PROVINCE_BOUNDS = {
 const PROVINCE_NAMES = {
   BC: 'British Columbia', AB: 'Alberta', SK: 'Saskatchewan',
   MB: 'Manitoba', ON: 'Ontario', QC: 'Quebec',
-  NB: 'New Brunswick', NS: 'Nova Scotia', PEI: 'Prince Edward Island',
+  NB: 'New Brunswick', NS: 'Nova Scotia', PE: 'Prince Edward Island',
   NL: 'Newfoundland & Labrador', YT: 'Yukon',
   NT: 'Northwest Territories', NU: 'Nunavut',
+};
+
+// CWFIS agency code → province code
+const AGENCY_TO_PROVINCE = {
+  bc: 'BC', ab: 'AB', sk: 'SK', mb: 'MB',
+  on: 'ON', qc: 'QC', nb: 'NB', ns: 'NS',
+  pei: 'PE', nl: 'NL', yt: 'YT', nt: 'NT', nu: 'NU',
+};
+
+const SOC_LABELS = {
+  OC: 'Out of Control',
+  BH: 'Being Held',
+  UC: 'Under Control',
+  PF: 'Prescribed Fire',
+};
+
+const CAUSE_LABELS = {
+  H: 'Human',
+  L: 'Lightning',
+  N: 'Natural',
+  U: 'Unknown',
 };
 
 // ── Wind grid points across Canada ───────────────────────────────────────────
@@ -71,7 +95,6 @@ map = new mapboxgl.Map({
   projection: 'mercator',
 });
 
-// Large zoom controls for touchscreen use
 map.addControl(
   new mapboxgl.NavigationControl({ showCompass: false }),
   'top-left'
@@ -89,15 +112,6 @@ map.on('load', () => {
   setupPanel();
   setupRefreshBtn();
   setupWindToggle();
-
-  // Load fire icon in background — swap it in once ready, don't block on it
-  map.loadImage('Images/Fire_Icon.png', (err, image) => {
-    if (err || !image) return;
-    map.addImage('fire-icon', image, { sdf: false });
-    if (map.getLayer('fire-points')) {
-      map.setLayoutProperty('fire-points', 'icon-image', 'fire-icon');
-    }
-  });
 });
 
 // ── Data fetching ────────────────────────────────────────────────────────────
@@ -106,10 +120,10 @@ async function fetchFires() {
   setSpinning(true);
   showLoading(true);
   try {
-    const res = await fetch(FIRMS_URL);
+    const res = await fetch(cwfisUrl());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    allFires = parseCSV(text);
+    const json = await res.json();
+    allFires = processCWFIS(json);
     updateMap();
     updateStats();
     updateLastUpdated();
@@ -123,43 +137,29 @@ async function fetchFires() {
   }
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
+function processCWFIS(geojson) {
+  if (!geojson || !Array.isArray(geojson.features)) return [];
 
-  const headers = lines[0].split(',');
-  const idx     = h => headers.indexOf(h);
-
-  const iLat  = idx('latitude');
-  const iLon  = idx('longitude');
-  const iDate = idx('acq_date');
-  const iTime = idx('acq_time');
-  const iConf = idx('confidence');
-  const iFrp  = idx('frp');
-  const iSat  = idx('satellite');
-  const iDay  = idx('daynight');
-
-  return lines.slice(1).flatMap(line => {
-    const c   = line.split(',');
-    const lat = parseFloat(c[iLat]);
-    const lon = parseFloat(c[iLon]);
+  return geojson.features.flatMap(f => {
+    const p   = f.properties;
+    const lat = parseFloat(p.lat);
+    const lon = parseFloat(p.lon);
     if (isNaN(lat) || isNaN(lon)) return [];
-    const conf = (c[iConf] || '').trim().toLowerCase();
-    if (conf === 'low') return [];
 
-    const rawTime = (c[iTime] || '').trim().padStart(4, '0');
-    const time    = rawTime.slice(0, 2) + ':' + rawTime.slice(2);
+    const province = AGENCY_TO_PROVINCE[(p.agency || '').toLowerCase()]
+                  || detectProvince(lat, lon);
 
     return [{
       lat,
       lon,
-      frp:      parseFloat(c[iFrp]) || 0,
-      conf,
-      date:     (c[iDate] || '').trim(),
-      time,
-      satellite: (c[iSat] || '').trim(),
-      daynight:  (c[iDay] || '').trim() === 'D' ? 'Daytime' : 'Nighttime',
-      province:  detectProvince(lat, lon),
+      firename:  p.firename  || 'Unnamed Fire',
+      hectares:  parseFloat(p.hectares) || 0,
+      soc:       p.stage_of_control || 'UC',
+      cause:     p.cause || 'U',
+      startdate: p.startdate     || null,
+      lastdate:  p.last_rep_date || null,
+      agency:    p.agency || '',
+      province,
     }];
   });
 }
@@ -194,13 +194,13 @@ function addFireSource() {
     type:           'geojson',
     data:           { type: 'FeatureCollection', features: [] },
     cluster:        true,
-    clusterMaxZoom: 10,
-    clusterRadius:  45,
+    clusterMaxZoom: 8,
+    clusterRadius:  40,
   });
 }
 
 function addFireLayers() {
-  // Cluster circles — colour shifts warmer as count grows
+  // Cluster circles
   map.addLayer({
     id:     'fire-clusters',
     type:   'circle',
@@ -209,13 +209,13 @@ function addFireLayers() {
     paint: {
       'circle-color': [
         'step', ['get', 'point_count'],
-        '#ef6201',  25,
-        '#ef2601',  100,
+        '#f97316', 10,
+        '#ef2601', 50,
         '#c81000'
       ],
       'circle-radius': [
         'step', ['get', 'point_count'],
-        18, 25, 26, 100, 36
+        20, 10, 28, 50, 38
       ],
       'circle-stroke-width': 2,
       'circle-stroke-color': 'rgba(239,38,1,0.3)',
@@ -231,25 +231,56 @@ function addFireLayers() {
     layout: {
       'text-field': '{point_count_abbreviated}',
       'text-font':  ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size':  13,
+      'text-size':  14,
     },
     paint: { 'text-color': '#fff' },
   });
 
-  // Individual fire points — icon sized by FRP
+  // Individual fire circles — sized by hectares, coloured by stage of control
   map.addLayer({
     id:     'fire-points',
+    type:   'circle',
+    source: 'fires',
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-color': [
+        'match', ['get', 'soc'],
+        'OC', '#ef2601',
+        'BH', '#f97316',
+        'UC', '#22c55e',
+        '#818080',
+      ],
+      'circle-radius': [
+        'interpolate', ['linear'], ['get', 'hectares'],
+        0,       8,
+        1000,   13,
+        10000,  19,
+        100000, 28,
+      ],
+      'circle-stroke-width': 2,
+      'circle-stroke-color': 'rgba(255,255,255,0.2)',
+      'circle-opacity': 0.88,
+    },
+  });
+
+  // Fire name label beneath each point
+  map.addLayer({
+    id:     'fire-labels',
     type:   'symbol',
     source: 'fires',
     filter: ['!', ['has', 'point_count']],
     layout: {
-      'icon-image':             '',
-      'icon-size': [
-        'interpolate', ['linear'], ['get', 'frp'],
-        0, 0.04,  50, 0.06,  200, 0.09,  1000, 0.14
-      ],
-      'icon-allow-overlap':     true,
-      'icon-ignore-placement':  true,
+      'text-field':          ['get', 'firename'],
+      'text-size':           10,
+      'text-font':           ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'],
+      'text-offset':         [0, 1.8],
+      'text-anchor':         'top',
+      'text-allow-overlap':  false,
+    },
+    paint: {
+      'text-color':      'rgba(255,255,255,0.75)',
+      'text-halo-color': 'rgba(0,0,0,0.6)',
+      'text-halo-width': 1,
     },
   });
 
@@ -268,7 +299,6 @@ function addFireLayers() {
     });
   });
 
-  // Touch/cursor feedback
   ['fire-points', 'fire-clusters'].forEach(layer => {
     map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
@@ -282,15 +312,18 @@ function updateMap() {
 // ── Stats ────────────────────────────────────────────────────────────────────
 
 function updateStats() {
-  const fires  = filteredFires();
-  const high   = fires.filter(f => f.conf === 'high').length;
-  const provs  = new Set(fires.map(f => f.province).filter(Boolean)).size;
-  const maxFrp = fires.reduce((m, f) => Math.max(m, f.frp), 0);
+  const fires   = filteredFires();
+  const oc      = fires.filter(f => f.soc === 'OC').length;
+  const provs   = new Set(fires.map(f => f.province).filter(Boolean)).size;
+  const totalHa = fires.reduce((s, f) => s + f.hectares, 0);
+  const haStr   = totalHa >= 1000
+    ? (totalHa / 1000).toFixed(1) + 'k'
+    : Math.round(totalHa).toLocaleString();
 
   document.getElementById('stat-total').textContent     = fires.length.toLocaleString();
-  document.getElementById('stat-high').textContent      = high.toLocaleString();
+  document.getElementById('stat-oc').textContent        = oc.toLocaleString();
   document.getElementById('stat-provinces').textContent = provs;
-  document.getElementById('stat-frp').textContent       = maxFrp > 0 ? maxFrp.toFixed(0) : '—';
+  document.getElementById('stat-ha').textContent        = totalHa > 0 ? haStr : '—';
 }
 
 function updateLastUpdated() {
@@ -329,19 +362,33 @@ function setupPanel() {
 async function showPanel(props) {
   const prov = props.province
     ? `${PROVINCE_NAMES[props.province] || props.province} (${props.province})`
-    : 'Location unknown';
+    : (props.agency ? props.agency.toUpperCase() : 'Location unknown');
 
-  const confLabel = { high: '🟠 High', nominal: '🟡 Nominal', low: '⚪ Low' }[props.conf] || props.conf;
+  const haStr    = parseFloat(props.hectares) > 0
+    ? parseFloat(props.hectares).toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' ha'
+    : '< 1 ha';
+  const socLabel  = SOC_LABELS[props.soc]  || props.soc  || '—';
+  const causeLabel = CAUSE_LABELS[props.cause] || props.cause || '—';
+  const startStr  = props.startdate
+    ? new Date(props.startdate).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })
+    : '—';
 
-  document.getElementById('panel-province').textContent   = prov;
-  document.getElementById('panel-time').textContent       = `${props.date}  ·  ${props.time} UTC`;
-  document.getElementById('panel-confidence').textContent = confLabel;
-  document.getElementById('panel-frp').textContent        = props.frp > 0 ? `${parseFloat(props.frp).toFixed(1)} MW` : '—';
-  document.getElementById('panel-satellite').textContent  = props.satellite || '—';
-  document.getElementById('panel-daynight').textContent   = props.daynight || '—';
-  document.getElementById('panel-coords').textContent     = `${parseFloat(props.lat).toFixed(4)}, ${parseFloat(props.lon).toFixed(4)}`;
+  document.getElementById('panel-firename').textContent  = props.firename || '—';
+  document.getElementById('panel-province').textContent  = prov;
+  document.getElementById('panel-hectares').textContent  = haStr;
+  document.getElementById('panel-soc').textContent       = socLabel;
+  document.getElementById('panel-cause').textContent     = causeLabel;
+  document.getElementById('panel-startdate').textContent = startStr;
+  document.getElementById('panel-coords').textContent    = `${parseFloat(props.lat).toFixed(4)}, ${parseFloat(props.lon).toFixed(4)}`;
 
-  // Reset wind fields while loading
+  // Colour the stage-of-control value
+  const socEl = document.getElementById('panel-soc');
+  socEl.style.color = props.soc === 'OC' ? '#ef2601'
+                    : props.soc === 'BH' ? '#f97316'
+                    : props.soc === 'UC' ? '#22c55e'
+                    : '';
+
+  // Reset wind fields
   document.getElementById('panel-wind-speed').textContent = '…';
   document.getElementById('panel-wind-dir').textContent   = '…';
   document.getElementById('panel-smoke-dir').textContent  = '…';
@@ -465,7 +512,6 @@ async function fetchWindGrid() {
     geometry:   { type: 'Point', coordinates: [d.longitude, d.latitude] },
     properties: {
       speed:    Math.round(d.current?.windspeed_10m    ?? 0),
-      // wind direction is "from" — add 180° to get "toward" for arrow direction
       rotation: Math.round((d.current?.winddirection_10m ?? 0) + 180) % 360,
     },
   }));

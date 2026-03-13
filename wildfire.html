@@ -55,8 +55,8 @@
   </div>
   <div class="stat-divider"></div>
   <div class="stat">
-    <span class="stat-value" id="stat-high">—</span>
-    <span class="stat-label">High Confidence</span>
+    <span class="stat-value stat-value--red" id="stat-oc">—</span>
+    <span class="stat-label">Out of Control</span>
   </div>
   <div class="stat-divider"></div>
   <div class="stat">
@@ -65,8 +65,8 @@
   </div>
   <div class="stat-divider"></div>
   <div class="stat">
-    <span class="stat-value" id="stat-frp">—</span>
-    <span class="stat-label">Max Intensity (MW)</span>
+    <span class="stat-value" id="stat-ha">—</span>
+    <span class="stat-label">Total Hectares</span>
   </div>
 </div>
 
@@ -76,30 +76,26 @@
   <div class="panel-header">
     <div class="panel-fire-icon">🔥</div>
     <div>
-      <div class="panel-title">Active Fire</div>
+      <div class="panel-title" id="panel-firename">—</div>
       <div class="panel-province" id="panel-province">—</div>
     </div>
   </div>
   <div class="panel-body">
     <div class="panel-row">
-      <span class="panel-label">Detected</span>
-      <span class="panel-value" id="panel-time">—</span>
+      <span class="panel-label">Size</span>
+      <span class="panel-value" id="panel-hectares">—</span>
     </div>
     <div class="panel-row">
-      <span class="panel-label">Confidence</span>
-      <span class="panel-value" id="panel-confidence">—</span>
+      <span class="panel-label">Stage of Control</span>
+      <span class="panel-value" id="panel-soc">—</span>
     </div>
     <div class="panel-row">
-      <span class="panel-label">Intensity (FRP)</span>
-      <span class="panel-value" id="panel-frp">—</span>
+      <span class="panel-label">Cause</span>
+      <span class="panel-value" id="panel-cause">—</span>
     </div>
     <div class="panel-row">
-      <span class="panel-label">Satellite</span>
-      <span class="panel-value" id="panel-satellite">—</span>
-    </div>
-    <div class="panel-row">
-      <span class="panel-label">Day / Night</span>
-      <span class="panel-value" id="panel-daynight">—</span>
+      <span class="panel-label">Started</span>
+      <span class="panel-value" id="panel-startdate">—</span>
     </div>
     <div class="panel-row">
       <span class="panel-label">Coordinates</span>
@@ -129,7 +125,7 @@
 
 <!-- Error banner -->
 <div class="error-banner" id="error-banner" style="display:none;">
-  ⚠ Unable to load fire data — check API keys and connection.
+  ⚠ Unable to load fire data — check connection.
 </div>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
