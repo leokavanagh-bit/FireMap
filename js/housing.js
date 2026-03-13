@@ -142,8 +142,8 @@ function addHousingLayers() {
       'text-field': [
         'case',
         ['>=', ['get', 'benchmark'], 1000000],
-        ['concat', '$', ['to-string', ['/', ['round', ['*', ['/', ['get', 'benchmark'], 1000000], 10]], 10]], 'M'],
-        ['concat', '$', ['to-string', ['round', ['/', ['get', 'benchmark'], 1000]]], 'k'],
+        ['concat', '$', ['number-format', ['/', ['get', 'benchmark'], 1000000], { 'max-fraction-digits': 1 }], 'M'],
+        ['concat', '$', ['number-format', ['/', ['get', 'benchmark'], 1000],    { 'max-fraction-digits': 0 }], 'k'],
       ],
       'text-size':             12,
       'text-font':             ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
