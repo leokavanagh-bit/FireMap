@@ -39,12 +39,23 @@ const PROVINCE_NAMES = {
   NT: 'Northwest Territories', NU: 'Nunavut',
 };
 
+// ── Wind grid points across Canada ───────────────────────────────────────────
+// 4 rows × 6 columns = 24 sample points
+
+const WIND_GRID = [];
+for (const lat of [50, 56, 62, 68]) {
+  for (const lon of [-134, -121, -108, -95, -82, -69]) {
+    WIND_GRID.push([lat, lon]);
+  }
+}
+
 // ── State ────────────────────────────────────────────────────────────────────
 
 let map;
 let allFires     = [];
 let activeFilter = 'all';
 let refreshTimer = null;
+let windEnabled  = false;
 
 // ── Map init ─────────────────────────────────────────────────────────────────
 
@@ -67,15 +78,19 @@ map.addControl(
 );
 
 map.on('load', () => {
+  map.addImage('wind-arrow', createArrowImage());
   map.loadImage('Images/Fire_Icon.png', (err, image) => {
     if (!err) map.addImage('fire-icon', image, { sdf: false });
     addFireSource();
     addFireLayers();
+    addWindSource();
+    addWindLayer();
     fetchFires();
     startRefresh();
     setupFilters();
     setupPanel();
     setupRefreshBtn();
+    setupWindToggle();
   });
 });
 
@@ -303,7 +318,7 @@ function setupPanel() {
   document.getElementById('panel-close').addEventListener('click', hidePanel);
 }
 
-function showPanel(props) {
+async function showPanel(props) {
   const prov = props.province
     ? `${PROVINCE_NAMES[props.province] || props.province} (${props.province})`
     : 'Location unknown';
@@ -318,7 +333,26 @@ function showPanel(props) {
   document.getElementById('panel-daynight').textContent   = props.daynight || '—';
   document.getElementById('panel-coords').textContent     = `${parseFloat(props.lat).toFixed(4)}, ${parseFloat(props.lon).toFixed(4)}`;
 
+  // Reset wind fields while loading
+  document.getElementById('panel-wind-speed').textContent = '…';
+  document.getElementById('panel-wind-dir').textContent   = '…';
+  document.getElementById('panel-smoke-dir').textContent  = '…';
+
   document.getElementById('fire-panel').classList.add('open');
+
+  // Fetch live wind for this fire's location
+  try {
+    const wind     = await fetchFireWind(props.lat, props.lon);
+    const fromComp = degreesToCompass(wind.direction);
+    const toComp   = degreesToCompass((wind.direction + 180) % 360);
+    document.getElementById('panel-wind-speed').textContent = `${wind.speed} km/h`;
+    document.getElementById('panel-wind-dir').textContent   = `From ${fromComp} (${wind.direction}°)`;
+    document.getElementById('panel-smoke-dir').textContent  = `Toward ${toComp}`;
+  } catch {
+    document.getElementById('panel-wind-speed').textContent = '—';
+    document.getElementById('panel-wind-dir').textContent   = '—';
+    document.getElementById('panel-smoke-dir').textContent  = '—';
+  }
 }
 
 function hidePanel() {
@@ -341,6 +375,119 @@ function startRefresh() {
 
 function setSpinning(on) {
   document.getElementById('refresh-btn').classList.toggle('spinning', on);
+}
+
+// ── Wind ─────────────────────────────────────────────────────────────────────
+
+function createArrowImage() {
+  const size = 64;
+  const c    = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx  = c.getContext('2d');
+  const cx   = size / 2;
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillStyle   = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth   = 3;
+  ctx.lineCap     = 'round';
+
+  // Shaft (pointing up = north by default)
+  ctx.beginPath();
+  ctx.moveTo(cx, size - 10);
+  ctx.lineTo(cx, 20);
+  ctx.stroke();
+
+  // Arrowhead
+  ctx.beginPath();
+  ctx.moveTo(cx, 6);
+  ctx.lineTo(cx - 9, 22);
+  ctx.lineTo(cx + 9, 22);
+  ctx.closePath();
+  ctx.fill();
+
+  return c;
+}
+
+function addWindSource() {
+  map.addSource('wind', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] },
+  });
+}
+
+function addWindLayer() {
+  map.addLayer({
+    id:     'wind-arrows',
+    type:   'symbol',
+    source: 'wind',
+    layout: {
+      'icon-image':              'wind-arrow',
+      'icon-size':               0.65,
+      'icon-rotate':             ['get', 'rotation'],
+      'icon-rotation-alignment': 'map',
+      'icon-allow-overlap':      true,
+      'text-field':              ['concat', ['to-string', ['get', 'speed']], ' km/h'],
+      'text-size':               11,
+      'text-offset':             [0, 2],
+      'text-font':               ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'],
+      'visibility':              'none',
+    },
+    paint: {
+      'icon-opacity': [
+        'interpolate', ['linear'], ['get', 'speed'],
+        0, 0.25, 20, 0.6, 60, 1.0
+      ],
+      'text-color':   'rgba(255,255,255,0.65)',
+    },
+  });
+}
+
+async function fetchWindGrid() {
+  const lats = WIND_GRID.map(p => p[0]).join(',');
+  const lons  = WIND_GRID.map(p => p[1]).join(',');
+  const url   = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=windspeed_10m,winddirection_10m&wind_speed_unit=kmh`;
+
+  const res  = await fetch(url);
+  const data = await res.json();
+  const arr  = Array.isArray(data) ? data : [data];
+
+  const features = arr.map(d => ({
+    type: 'Feature',
+    geometry:   { type: 'Point', coordinates: [d.longitude, d.latitude] },
+    properties: {
+      speed:    Math.round(d.current?.windspeed_10m    ?? 0),
+      // wind direction is "from" — add 180° to get "toward" for arrow direction
+      rotation: Math.round((d.current?.winddirection_10m ?? 0) + 180) % 360,
+    },
+  }));
+
+  map.getSource('wind').setData({ type: 'FeatureCollection', features });
+}
+
+async function fetchFireWind(lat, lon) {
+  const url  = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=windspeed_10m,winddirection_10m&wind_speed_unit=kmh`;
+  const res  = await fetch(url);
+  const data = await res.json();
+  return {
+    speed:     Math.round(data.current?.windspeed_10m    ?? 0),
+    direction: Math.round(data.current?.winddirection_10m ?? 0),
+  };
+}
+
+function degreesToCompass(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+function setupWindToggle() {
+  const btn = document.getElementById('wind-btn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    windEnabled = !windEnabled;
+    btn.classList.toggle('active', windEnabled);
+    map.setLayoutProperty('wind-arrows', 'visibility', windEnabled ? 'visible' : 'none');
+    if (windEnabled) await fetchWindGrid();
+  });
 }
 
 // ── Loading / error UI ───────────────────────────────────────────────────────

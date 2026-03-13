@@ -103,6 +103,30 @@ html, body {
 .filter-pill:hover  { background: var(--mid); color: var(--light); }
 .filter-pill.active { background: var(--red); color: #fff; }
 
+/* Wind toggle */
+.wind-toggle-wrap {
+  padding: 8px;
+  border-top: 1px solid var(--mid);
+  border-bottom: 1px solid var(--mid);
+  flex-shrink: 0;
+}
+
+.wind-btn {
+  width: 100%;
+  padding: 9px 4px;
+  background: transparent;
+  border: 1.5px solid var(--mid);
+  border-radius: 4px;
+  color: var(--lgray);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+}
+.wind-btn:hover  { border-color: var(--light); color: var(--light); }
+.wind-btn.active { background: rgba(255,255,255,0.12); border-color: var(--light); color: var(--light); }
+
 /* Status / refresh at bottom */
 .nav-status {
   display: flex;
@@ -285,6 +309,14 @@ html, body {
   font-weight: 600;
   color: var(--light);
   text-align: right;
+}
+
+.panel-smoke { color: #ff8c00; }
+
+.panel-divider {
+  height: 1px;
+  background: var(--mid);
+  margin: 4px 0;
 }
 
 /* ── Loading ─────────────────────────────────────────────────────────────── */
