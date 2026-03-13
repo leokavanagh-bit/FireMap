@@ -84,20 +84,9 @@ html, body {
   transform: translateY(-6px);
 }
 
-.card-icon  { font-size: 4.5rem; line-height: 1; }
-.card-icon img { width: 88px; height: 88px; object-fit: contain; display: block; }
-
-.card-name  {
-  font-size: 1.55rem;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  color: var(--light);
-}
-
-.card-desc  {
-  font-size: 0.85rem;
-  color: var(--gray);
-  text-align: center;
-  line-height: 1.6;
-  max-width: 260px;
+.splash-card img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  display: block;
 }
