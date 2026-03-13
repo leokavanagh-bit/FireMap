@@ -63,7 +63,7 @@ map = new mapboxgl.Map({
 // Large zoom controls for touchscreen use
 map.addControl(
   new mapboxgl.NavigationControl({ showCompass: false }),
-  'top-left'
+  'top-right'
 );
 
 map.on('load', () => {
