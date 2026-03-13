@@ -8,7 +8,7 @@
   --gray:   #818080;
   --lgray:  #aeaeae;
   --font:   -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --nav-h:  72px;
+  --nav-w:  88px;
   --stats-h: 68px;
 }
 
@@ -21,109 +21,112 @@ html, body {
   color: var(--light);
 }
 
-/* ── Top Nav ─────────────────────────────────────────────────────────────── */
+/* ── Side Nav (right strip) ──────────────────────────────────────────────── */
 
-.top-nav {
+.side-nav {
   position: fixed;
-  top: 0; left: 0; right: 0;
-  height: var(--nav-h);
+  right: 0; top: 0; bottom: 0;
+  width: var(--nav-w);
   background: var(--dark);
-  border-bottom: 2px solid var(--red);
+  border-left: 2px solid var(--red);
   display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 0 24px;
+  flex-direction: column;
+  align-items: stretch;
   z-index: 100;
 }
 
+/* Brand block at top */
 .nav-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 5px;
+  padding: 12px 8px 10px;
+  border-bottom: 1px solid var(--mid);
   flex-shrink: 0;
 }
 
 .nav-logo {
-  height: 34px;
-  width: auto;
+  width: 100%;
+  height: auto;
   display: block;
 }
 
-.nav-divider {
-  width: 1px;
-  height: 36px;
-  background: var(--mid);
-  flex-shrink: 0;
-}
+.nav-divider { display: none; }
 
 .nav-title-main {
-  display: block;
-  font-size: 0.95rem;
+  font-size: 0.45rem;
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--light);
+  text-align: center;
+  line-height: 1.3;
 }
 
 .nav-title-sub {
-  display: block;
-  font-size: 0.58rem;
+  font-size: 0.42rem;
   font-weight: 700;
-  letter-spacing: 2.5px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--red);
-  margin-top: 2px;
+  text-align: center;
 }
 
-/* Province filter pills */
+/* Province filter buttons */
 .province-filters {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
   flex: 1;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: hidden;
 }
-.province-filters::-webkit-scrollbar { display: none; }
 
 .filter-pill {
-  padding: 8px 18px;
-  border: 1.5px solid var(--mid);
-  border-radius: 24px;
+  flex: 1;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--mid);
+  border-radius: 0;
   background: transparent;
   color: var(--lgray);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.8px;
   cursor: pointer;
-  white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-  min-height: 42px;
-  min-width: 54px;
-}
-.filter-pill:hover  { border-color: var(--light); color: var(--light); }
-.filter-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
-
-/* Status area */
-.nav-status {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+.filter-pill:last-child { border-bottom: none; }
+.filter-pill:hover  { background: var(--mid); color: var(--light); }
+.filter-pill.active { background: var(--red); color: #fff; }
+
+/* Status / refresh at bottom */
+.nav-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-top: 1px solid var(--mid);
   flex-shrink: 0;
 }
 
 .last-updated {
-  font-size: 0.7rem;
-  color: var(--lgray);
-  white-space: nowrap;
-  letter-spacing: 0.3px;
+  font-size: 0.5rem;
+  color: var(--gray);
+  text-align: center;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .refresh-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border: 1.5px solid var(--mid);
-  border-radius: 50%;
+  border-radius: 4px;
   background: transparent;
   color: var(--lgray);
   font-size: 1.3rem;
@@ -134,8 +137,8 @@ html, body {
   transition: border-color 0.15s, color 0.15s;
   line-height: 1;
 }
-.refresh-btn:hover               { border-color: var(--red); color: var(--red); }
-.refresh-btn.spinning            { animation: spin 0.9s linear infinite; }
+.refresh-btn:hover    { border-color: var(--red); color: var(--red); }
+.refresh-btn.spinning { animation: spin 0.9s linear infinite; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -143,8 +146,9 @@ html, body {
 
 #map {
   position: fixed;
-  top: var(--nav-h);
-  left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: var(--nav-w);
   bottom: var(--stats-h);
 }
 
@@ -152,7 +156,8 @@ html, body {
 
 .stats-bar {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0; left: 0;
+  right: var(--nav-w);
   height: var(--stats-h);
   background: var(--dark);
   border-top: 2px solid var(--mid);
@@ -197,8 +202,8 @@ html, body {
 
 .fire-panel {
   position: fixed;
-  top: calc(var(--nav-h) + 16px);
-  right: -400px;
+  top: 16px;
+  right: -380px;
   width: 360px;
   background: var(--dark);
   border: 1.5px solid var(--mid);
@@ -207,14 +212,12 @@ html, body {
   transition: right 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
 }
-.fire-panel.open { right: 16px; }
+.fire-panel.open { right: calc(var(--nav-w) + 16px); }
 
 .panel-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 36px;
-  height: 36px;
+  top: 14px; right: 14px;
+  width: 36px; height: 36px;
   border: none;
   background: var(--mid);
   color: var(--light);
@@ -323,7 +326,7 @@ html, body {
 
 .error-banner {
   position: fixed;
-  top: calc(var(--nav-h) + 14px);
+  top: 14px;
   left: 50%;
   transform: translateX(-50%);
   background: #7a0000;
